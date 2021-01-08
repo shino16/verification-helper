@@ -98,9 +98,9 @@ def push_timestamp_to_branch() -> None:
     subprocess.check_call(['git', 'config', '--global', 'user.name', 'GitHub'])
     subprocess.check_call(['git', 'config', '--global', 'user.email', 'noreply@github.com'])
     path = onlinejudge_verify.marker.get_verification_marker().json_path
-    logger.info('$ git add %s && git commit && git push', str(path))
+    logger.info('$ git add %s && git commit && git push', path.as_posix())
     if path.exists():
-        subprocess.check_call(['git', 'add', str(path)])
+        subprocess.check_call(['git', 'add', path.as_posix()])
     if subprocess.run(['git', 'diff', '--quiet', '--staged'], check=False).returncode:
         message = '[auto-verifier] verify commit {}'.format(os.environ['GITHUB_SHA'])
         subprocess.check_call(['git', 'commit', '-m', message])
@@ -122,8 +122,8 @@ def push_documents_to_gh_pages(*, src_dir: pathlib.Path, dst_branch: str = 'gh-p
     src_files = {}
     for path in map(pathlib.Path, glob.glob(str(src_dir) + '/**/*', recursive=True)):
         if path.is_file():
-            logger.info('%s', str(path))
-            with open(str(path), 'rb') as fh:
+            logger.info('%s', path.as_posix())
+            with open(path.as_posix(), 'rb') as fh:
                 src_files[path.relative_to(src_dir)] = fh.read()
 
     # checkout gh-pages
@@ -143,7 +143,7 @@ def push_documents_to_gh_pages(*, src_dir: pathlib.Path, dst_branch: str = 'gh-p
                 path.unlink()
     for path, data in src_files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(str(path), 'wb') as fh:
+        with open(path.as_posix(), 'wb') as fh:
             fh.write(data)
 
     # commit and push

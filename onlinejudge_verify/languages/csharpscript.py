@@ -27,7 +27,7 @@ def _publish_csx(path: pathlib.Path) -> pathlib.Path:
     command = [
         'dotnet-script',
         'publish',
-        str(path),
+        path.as_posix(),
         '--dll',
         '-n',
         filename,

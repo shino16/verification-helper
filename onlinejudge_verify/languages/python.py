@@ -33,10 +33,10 @@ class PythonLanguageEnvironment(LanguageEnvironment):
             path = {repr(str(path.resolve()))}
             basedir = {repr(str(basedir.resolve()))}
 
-            # run {str(path)}
+            # run {path.as_posix()}
             env = dict(os.environ)
             if "PYTHONPATH" in env:
-                env["PYTHONPATH"] = basedir + os.pathsep + env["PYTHONPATH"] 
+                env["PYTHONPATH"] = basedir + os.pathsep + env["PYTHONPATH"]
             else:
                 env["PYTHONPATH"] = basedir  # set `PYTHONPATH` to import files relative to the root directory
             os.execve(sys.executable, [sys.executable, path], env=env)  # use `os.execve` to avoid making an unnecessary parent process
@@ -57,7 +57,7 @@ def _python_list_depending_files(path: pathlib.Path, basedir: pathlib.Path) -> L
     )
     try:
         executor = concurrent.futures.ThreadPoolExecutor()
-        future = executor.submit(importlab.graph.ImportGraph.create, env, [str(path)])
+        future = executor.submit(importlab.graph.ImportGraph.create, env, [path.as_posix()])
         if platform.uname().system == 'Windows':
             timeout = 5.0  # 1.0 sec causes timeout on CI using Windows
         else:
@@ -69,7 +69,7 @@ def _python_list_depending_files(path: pathlib.Path, basedir: pathlib.Path) -> L
         node_deps_pairs = res_graph.deps_list()  # type: List[Tuple[str, List[str]]]
     except Exception as e:
         raise RuntimeError(f"Failed to analyze the dependency graph (circular imports?): {path}") from e
-    logger.debug('the dependency graph of %s: %s', str(path), node_deps_pairs)
+    logger.debug('the dependency graph of %s: %s', path.as_posix(), node_deps_pairs)
 
     # collect Python files which are depended by the `path` and under `basedir`
     res_deps = []  # type: List[pathlib.Path]

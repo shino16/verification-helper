@@ -20,7 +20,7 @@ def load_files_pathlib(files: Dict[pathlib.Path, bytes]) -> Iterator[pathlib.Pat
         for relpath, data in files.items():
             path = tempdir / relpath
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(str(path), "wb") as fh:
+            with open(path.as_posix(), "wb") as fh:
                 fh.write(data)
         yield tempdir
 
@@ -29,7 +29,7 @@ def load_files_pathlib(files: Dict[pathlib.Path, bytes]) -> Iterator[pathlib.Pat
 def chdir(path: pathlib.Path) -> Iterator[None]:
     cwd = os.getcwd()
     try:
-        os.chdir(str(path))
+        os.chdir(path.as_posix())
         yield
     finally:
         os.chdir(cwd)

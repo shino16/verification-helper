@@ -28,7 +28,7 @@ class CPlusPlusLanguageEnvironment(LanguageEnvironment):
         self.CXXFLAGS = CXXFLAGS
 
     def compile(self, path: pathlib.Path, *, basedir: pathlib.Path, tempdir: pathlib.Path) -> None:
-        command = [str(self.CXX), *self.CXXFLAGS, '-I', str(basedir), '-o', str(tempdir / 'a.out'), str(path)]
+        command = [str(self.CXX), *self.CXXFLAGS, '-I', str(basedir), '-o', str(tempdir / 'a.out'), path.as_posix()]
         logger.info('$ %s', ' '.join(command))
         subprocess.check_call(command)
 
@@ -48,23 +48,23 @@ def _cplusplus_list_depending_files(path: pathlib.Path, *, CXX: pathlib.Path, jo
     is_windows = (platform.uname().system == 'Windows')
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_file = pathlib.Path(temp_dir) / 'dependencies.txt'
-        command = [str(CXX), *shlex.split(joined_CXXFLAGS), '-MD', '-MF', str(temp_file), '-MM', str(path)]
+        command = [str(CXX), *shlex.split(joined_CXXFLAGS), '-MD', '-MF', str(temp_file), '-MM', path.as_posix()]
         try:
             subprocess.check_call(command)
         except subprocess.CalledProcessError:
-            logger.error("failed to analyze dependencies with %s: %s  (hint: Please check #include directives of the file and its dependencies. The paths must exist, must not contain '\\', and must be case-sensitive.)", CXX, str(path))
-            print(f'::warning file={str(path)}::failed to analyze dependencies', file=sys.stderr)
+            logger.error("failed to analyze dependencies with %s: %s  (hint: Please check #include directives of the file and its dependencies. The paths must exist, must not contain '\\', and must be case-sensitive.)", CXX, path.as_posix())
+            print(f'::warning file={path.as_posix()}::failed to analyze dependencies', file=sys.stderr)
             raise
         with open(temp_file, 'rb') as fp:
             data = fp.read()
-        logger.debug('dependencies of %s: %s', str(path), repr(data))
+        logger.debug('dependencies of %s: %s', path.as_posix(), repr(data))
         makefile_rule = shlex.split(data.decode().strip().replace('\\\n', '').replace('\\\r\n', ''), posix=not is_windows)
         return [pathlib.Path(path).resolve() for path in makefile_rule[1:]]
 
 
 @functools.lru_cache(maxsize=None)
 def _cplusplus_list_defined_macros(path: pathlib.Path, *, CXX: pathlib.Path, joined_CXXFLAGS: str) -> Dict[str, str]:
-    command = [str(CXX), *shlex.split(joined_CXXFLAGS), '-dM', '-E', str(path)]
+    command = [str(CXX), *shlex.split(joined_CXXFLAGS), '-dM', '-E', path.as_posix()]
     data = subprocess.check_output(command)
     define = {}
     for line in data.decode().splitlines():

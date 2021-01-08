@@ -20,13 +20,13 @@ class UserDefinedLanguageEnvironment(LanguageEnvironment):
 
     def compile(self, path: pathlib.Path, *, basedir: pathlib.Path, tempdir: pathlib.Path) -> None:
         assert 'compile' in self.config
-        command = self.config['compile'].format(path=str(path), basedir=str(basedir), tempdir=str(tempdir))
+        command = self.config['compile'].format(path=path.as_posix(), basedir=str(basedir), tempdir=str(tempdir))
         logger.info('$ %s', command)
         subprocess.check_call(shlex.split(command))
 
     def get_execute_command(self, path: pathlib.Path, *, basedir: pathlib.Path, tempdir: pathlib.Path) -> List[str]:
         assert 'execute' in self.config
-        command = self.config['execute'].format(path=str(path), basedir=str(basedir), tempdir=str(tempdir))
+        command = self.config['execute'].format(path=path.as_posix(), basedir=str(basedir), tempdir=str(tempdir))
         return shlex.split(command)
 
 
@@ -43,7 +43,7 @@ class UserDefinedLanguage(Language):
             return list_special_comments(path)
         logger.warning('"languages.*.list_attributes" field in .verify-helper/config.toml is now obsoleted')
 
-        command = self.config['list_attributes'].format(path=str(path), basedir=str(basedir))
+        command = self.config['list_attributes'].format(path=path.as_posix(), basedir=str(basedir))
         text = subprocess.check_output(shlex.split(command))
         attributes = {}
         for line in text.splitlines():
@@ -56,7 +56,7 @@ class UserDefinedLanguage(Language):
             logger.warning('The functionality to list dependencies of .%s file is not implemented yet.', self.extension)
             return list(utils.glob_with_predicate(lambda path: path.suffix == '.' + self.extension))
 
-        command = self.config['list_dependencies'].format(path=str(path), basedir=str(basedir))
+        command = self.config['list_dependencies'].format(path=path.as_posix(), basedir=str(basedir))
         text = subprocess.check_output(shlex.split(command))
         dependencies = [path]
         for line in text.splitlines():
@@ -65,8 +65,8 @@ class UserDefinedLanguage(Language):
 
     def bundle(self, path: pathlib.Path, *, basedir: pathlib.Path, options: Dict[str, Any]) -> bytes:
         if 'bundle' not in self.config:
-            raise RuntimeError('bundler is not specified: {}'.format(str(path)))
-        command = self.config['bundle'].format(path=str(path), basedir=str(basedir))
+            raise RuntimeError('bundler is not specified: {}'.format(path.as_posix()))
+        command = self.config['bundle'].format(path=path.as_posix(), basedir=str(basedir))
         logger.info('$ %s', command)
         return subprocess.check_output(shlex.split(command))
 

@@ -117,7 +117,7 @@ class VerificationMarker:
         data = {}
         for path, timestamp in self.new_timestamps.items():
             if self.verification_statuses[path] == 'verified':
-                data[str(path)] = timestamp.strftime('%Y-%m-%d %H:%M:%S %z')
+                data[path.as_posix()] = timestamp.strftime('%Y-%m-%d %H:%M:%S %z')
         with open(self.json_path, 'w') as fh:
             json.dump(data, fh, sort_keys=True, indent=0)
 

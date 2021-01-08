@@ -20,7 +20,7 @@ class NimLanguageEnvironment(LanguageEnvironment):
         self.NIMFLAGS = NIMFLAGS
 
     def compile(self, path: pathlib.Path, *, basedir: pathlib.Path, tempdir: pathlib.Path) -> None:
-        command = ["nim", self.compile_to, "-p:.", f"-o:{str(tempdir /'a.out')}", f"--nimcache:{str(tempdir)}"] + self.NIMFLAGS + [str(path)]
+        command = ["nim", self.compile_to, "-p:.", f"-o:{str(tempdir /'a.out')}", f"--nimcache:{str(tempdir)}"] + self.NIMFLAGS + [path.as_posix()]
         logger.info('$ %s', ' '.join(command))
         subprocess.check_call(command)
 

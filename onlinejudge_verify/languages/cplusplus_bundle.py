@@ -184,7 +184,7 @@ def _get_uncommented_code(path: pathlib.Path, *, iquotes_options: Tuple[str, ...
         if compiler == 'g++':
             raise BundleError(f'A fake g++ is detected. Please install the GNU C++ compiler.: {compiler}')
         raise BundleError(f"It's not g++. Please specify g++ with $CXX envvar.: {compiler}")
-    command = [compiler, '-x', 'c++', *iquotes_options, '-fpreprocessed', '-dD', '-E', str(path)]
+    command = [compiler, '-x', 'c++', *iquotes_options, '-fpreprocessed', '-dD', '-E', path.as_posix()]
     return subprocess.check_output(command)
 
 
@@ -215,7 +215,7 @@ class BundleErrorAt(BundleError):
             path = path.resolve().relative_to(pathlib.Path.cwd())
         except ValueError:
             pass
-        message = '{}: line {}: {}'.format(str(path), line, message)
+        message = '{}: line {}: {}'.format(path.as_posix(), line, message)
         super().__init__(message, *args, **kwargs)  # type: ignore
 
 
@@ -247,7 +247,7 @@ class Bundler:
             pass
         # パス中の特殊文字を JSON style にエスケープしてから生成コードに記述
         # quick solution to this: https://github.com/online-judge-tools/verification-helper/issues/280
-        self.result_lines.append('#line {} {}\n'.format(line, json.dumps(str(path))).encode())
+        self.result_lines.append('#line {} {}\n'.format(line, json.dumps(path.as_posix())).encode())
 
     # path を解決する
     # see: https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html#Directory-Options
@@ -261,7 +261,7 @@ class Bundler:
 
     def update(self, path: pathlib.Path) -> None:
         if path.resolve() in self.pragma_once:
-            logger.debug('%s: skipped since this file is included once with include guard', str(path))
+            logger.debug('%s: skipped since this file is included once with include guard', path.as_posix())
             return
 
         # 再帰的に自分自身を #include してたら諦める
@@ -270,7 +270,7 @@ class Bundler:
         self.path_stack.add(path)
         try:
 
-            with open(str(path), "rb") as fh:
+            with open(path.as_posix(), "rb") as fh:
                 code = fh.read()
                 if not code.endswith(b"\n"):
                     # ファイルの末尾に改行がなかったら足す
@@ -306,7 +306,7 @@ class Bundler:
 
                 # #pragma once
                 if re.match(rb'\s*#\s*pragma\s+once\s*', line):  # #pragma once は comment 扱いで消されてしまう
-                    logger.debug('%s: line %s: #pragma once', str(path), i + 1)
+                    logger.debug('%s: line %s: #pragma once', path.as_posix(), i + 1)
                     if non_guard_line_found:
                         # 先頭以外で #pragma once されてた場合は諦める
                         raise BundleErrorAt(path, i + 1, "#pragma once found in a non-first line")
@@ -324,7 +324,7 @@ class Bundler:
                     matched = re.match(rb'\s*#\s*ifndef\s+(\w+)\s*', uncommented_line)
                     if matched:
                         include_guard_macro = matched.group(1).decode()
-                        logger.debug('%s: line %s: #ifndef %s', str(path), i + 1, include_guard_macro)
+                        logger.debug('%s: line %s: #ifndef %s', path.as_posix(), i + 1, include_guard_macro)
                         self.result_lines.append(b"\n")
                         continue
 
@@ -333,7 +333,7 @@ class Bundler:
                     matched = re.match(rb'\s*#\s*define\s+(\w+)\s*', uncommented_line)
                     if matched and matched.group(1).decode() == include_guard_macro:
                         self.pragma_once.add(path.resolve())
-                        logger.debug('%s: line %s: #define %s', str(path), i + 1, include_guard_macro)
+                        logger.debug('%s: line %s: #define %s', path.as_posix(), i + 1, include_guard_macro)
                         include_guard_define_found = True
                         self.result_lines.append(b"\n")
                         continue
@@ -358,7 +358,7 @@ class Bundler:
                 matched = re.match(rb'\s*#\s*include\s*<(.*)>\s*', uncommented_line)
                 if matched:
                     included = matched.group(1).decode()
-                    logger.debug('%s: line %s: #include <%s>', str(path), i + 1, str(included))
+                    logger.debug('%s: line %s: #include <%s>', path.as_posix(), i + 1, str(included))
                     if included in self.pragma_once_system:
                         self._line(i + 2, path)
                     elif not is_toplevel:
@@ -394,7 +394,7 @@ class Bundler:
                 matched = re.match(rb'\s*#\s*include\s*"(.*)"\s*', uncommented_line)
                 if matched:
                     included = matched.group(1).decode()
-                    logger.debug('%s: line %s: #include "%s"', str(path), i + 1, included)
+                    logger.debug('%s: line %s: #include "%s"', path.as_posix(), i + 1, included)
                     if not is_toplevel:
                         # #if の中から #include されると #pragma once 系の判断が不可能になるので諦める
                         raise BundleErrorAt(path, i + 1, "unable to process #include in #if / #ifdef / #ifndef other than include guards")

@@ -79,9 +79,9 @@ def _render_source_code_stat(stat: SourceCodeStat, *, basedir: pathlib.Path) -> 
         'isVerificationFile': stat.is_verification_file,
         'verificationStatus': stat.verification_status.value,
         'timestamp': str(stat.timestamp),
-        'dependsOn': [str(path) for path in stat.depends_on],
-        'requiredBy': [str(path) for path in stat.required_by],
-        'verifiedWith': [str(path) for path in stat.verified_with],
+        'dependsOn': [path.as_posix() for path in stat.depends_on],
+        'requiredBy': [path.as_posix() for path in stat.required_by],
+        'verifiedWith': [path.as_posix() for path in stat.verified_with],
         'attributes': stat.attributes,
     }
 

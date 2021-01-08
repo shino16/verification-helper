@@ -261,7 +261,7 @@ def convert_to_page_render_jobs(*, source_code_stats: List[SourceCodeStat], mark
         if documentation_of is not None:
             documentation_of_path = resolve_documentation_of(documentation_of, markdown_path=path, basedir=basedir)
             if documentation_of_path is None:
-                logger.warning('the `documentation_of` path of %s is not found: %s', str(path), documentation_of)
+                logger.warning('the `documentation_of` path of %s is not found: %s', path.as_posix(), documentation_of)
                 del front_matter[FrontMatterItem.documentation_of.value]
                 continue
             documentation_of_relative_path = documentation_of_path.resolve().relative_to(basedir)

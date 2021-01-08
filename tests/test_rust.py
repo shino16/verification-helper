@@ -475,4 +475,4 @@ class TestRustVerification(unittest.TestCase):
                     self.assertEqual(verify.main([path], marker=marker).failed_test_paths, [])
                 with open(timestamps_path) as fh:
                     timestamps = json.load(fh)
-                self.assertEqual(list(timestamps.keys()), [str(path)])
+                self.assertEqual(list(timestamps.keys()), [path.as_posix()])

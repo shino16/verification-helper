@@ -21,7 +21,7 @@ def list_special_comments(path: pathlib.Path) -> Dict[str, str]:
                 value = (matched.group(2) or '').strip()
                 attributes[key] = value
                 if 'verify-helper:' in matched.group(0):
-                    logger.warning('use "verification-helper:" instead of "verify-helper:": %s', str(path))
+                    logger.warning('use "verification-helper:" instead of "verify-helper:": %s', path.as_posix())
     return attributes
 
 
@@ -37,13 +37,13 @@ def list_doxygen_annotations(path: pathlib.Path) -> Dict[str, str]:
                 value = matched.group(2).strip()
                 if key == 'docs':
                     attributes['_deprecated_at_docs'] = value
-                    logger.warning('deprecated annotation: "@%s %s" in %s.  use front-matter style instead', key, value, str(path))
+                    logger.warning('deprecated annotation: "@%s %s" in %s.  use front-matter style instead', key, value, path.as_posix())
                 elif key in ('title', 'brief'):
                     if 'document_title' in attributes:
                         continue
                     attributes['document_title'] = value
                 elif key in ('category', 'see', 'sa', 'ignore'):
-                    logger.debug('ignored annotation: "@%s %s" in %s', key, value, str(path))
+                    logger.debug('ignored annotation: "@%s %s" in %s', key, value, path.as_posix())
                     if key == 'ignore':
                         logger.warning('Now `@ignore` has no effect. Please write as `exclude: ["%s"]` at `.verify-helper/docs/_config.yml` instead.', value)
                 else:
